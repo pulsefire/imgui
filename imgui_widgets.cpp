@@ -8016,6 +8016,7 @@ bool    ImGui::BeginTableEx(const char* name, ImGuiID id, int columns_count, ImG
     table->OuterRect = outer_rect;
     table->WorkRect = outer_rect;
 
+    // When not using a child window, WorkRect.Max will grow as we append contents.
     if (use_child_window)
     {
         // Ensure no vertical scrollbar appears if we only want horizontal one, to make flag consistent
@@ -8041,11 +8042,9 @@ bool    ImGui::BeginTableEx(const char* name, ImGuiID id, int columns_count, ImG
         table->WorkRect = table->InnerWindow->WorkRect;
         table->OuterRect = table->InnerWindow->Rect();
     }
-    else
-    {
-        // WorkRect.Max will grow as we append contents.
-        PushID(instance_id);
-    }
+
+    // Push a standardized ID for both child and not-child using tables, equivalent to BeginTable() doing PushID(label) matching
+    PushOverrideID(instance_id);
 
     // Backup a copy of host window members we will modify
     ImGuiWindow* inner_window = table->InnerWindow;
@@ -8857,6 +8856,8 @@ void    ImGui::EndTable()
     }
 
     // Layout in outer window
+    IM_ASSERT_USER_ERROR(inner_window->IDStack.back() == table->ID + table->InstanceCurrent, "Mismatching PushID/PopID!");
+    PopID();
     inner_window->WorkRect = table->HostWorkRect;
     inner_window->SkipItems = table->HostSkipItems;
     outer_window->DC.CursorPos = table->OuterRect.Min;
@@ -8867,7 +8868,6 @@ void    ImGui::EndTable()
     }
     else
     {
-        PopID();
         ImVec2 item_size = table->OuterRect.GetSize();
         item_size.x = table->ColumnsTotalWidth;
         ItemSize(item_size);
