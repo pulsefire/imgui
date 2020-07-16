@@ -22,6 +22,12 @@ project "ImGui"
         staticruntime "On"
         systemversion "latest"
 
+        defines
+        {
+            "config=release_windows",
+            "IMGUI_API=__declspec(dllexport)"
+        }
+
     filter "configurations:Debug"
         defines "DEBUG"
         symbols "On"
